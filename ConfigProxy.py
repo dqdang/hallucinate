@@ -1,4 +1,3 @@
-# Python 3 server example
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from events import Events
 import json
@@ -19,10 +18,10 @@ def ConfigProxyFactory(chatPort):
 
         def do_GET(self):
             self.proxy_and_write_responses()
-            self.wfile.write(bytes("<html><head><title>https://pythonbasics.org</title></head>", "utf-8"))
+            self.wfile.write(bytes("<html><head><title>Config Proxy</title></head>", "utf-8"))
             self.wfile.write(bytes("<p>Request: %s</p>" % self.path, "utf-8"))
             self.wfile.write(bytes("<body>", "utf-8"))
-            self.wfile.write(bytes("<p>This is an example web server.</p>", "utf-8"))
+            self.wfile.write(bytes("<p>Hallucinate</p>", "utf-8"))
             self.wfile.write(bytes("</body></html>", "utf-8"))
             # self.wfile.write(bytes(json.dumps({'hello': 'world', 'received': 'ok'}), "utf-8"))
 
