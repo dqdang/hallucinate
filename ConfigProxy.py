@@ -14,7 +14,7 @@ def ConfigProxyFactory(chatPort):
         class ChatServerEventArgs:
             def __init__(self, ChatHost, ChatPort):
                 self.ChatHost = ChatHost
-                self.ChatPost = ChatPost
+                self.ChatPort = ChatPort
 
         def do_GET(self):
             self.proxy_and_write_responses()
@@ -43,7 +43,7 @@ def ConfigProxyFactory(chatPort):
 
             result = requests.get(url, headers=headers)
             content = result.text
-            # print("ORIGINAL CLIENTCONFIG:", content)
+            print("ORIGINAL CLIENTCONFIG:", content)
             modifiedContent = content
             try:
                 if result.ok:
