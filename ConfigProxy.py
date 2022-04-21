@@ -8,7 +8,9 @@ import socket
 import time
 import Utils
 
+
 hostName = "localhost"
+
 
 def ConfigProxyFactory(serverPort):
     class ConfigProxy(BaseHTTPRequestHandler):
@@ -35,7 +37,7 @@ def ConfigProxyFactory(serverPort):
             result = requests.get(url, headers=headers)
             content = result.text
             # print("ORIGINAL CLIENTCONFIG:", content)
-            modifiedContent = content
+            modifiedContent = json.dumps(content)
             # try:
             if result.ok:
                 configObject = result.json()
@@ -60,13 +62,12 @@ def ConfigProxyFactory(serverPort):
                             "Authorization": self.headers["authorization"]
                         }
                         pasJWT = requests.get(pas_url, headers=pas_header)
-                        affinity = jwt.decode(pasJWT.text, options={"verify_signature": False})["affinity"]
+                        affinity = jwt.decode(pasJWT.text, options={
+                                              "verify_signature": False})["affinity"]
                         riotChatHost = str(affinities[affinity])
 
                     for key in affinities.keys():
                         affinities[key] = "127.0.0.1"
-                    modifiedContent = json.dumps(configObject)
-                    # print("MODIFIED CLIENTCONFIG:", modifiedContent)
 
                 # Allow an invalid cert.
                 if "chat.allow_bad_cert.enabled" in configObject:
@@ -93,7 +94,7 @@ def ConfigProxyFactory(serverPort):
             #     print(e)
 
             responseBytes = bytes(modifiedContent, "utf-8")
-            self.send_response(result.status_code)
+            self.send_response(int(result.status_code))
             self.send_header("Content-type", "application/json")
             self.send_header("Content-Length", len(responseBytes))
             self.end_headers()

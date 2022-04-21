@@ -22,18 +22,6 @@ def main():
     #     return
 
 
-def deal_with_client(connstream):
-    data = connstream.recv(1024)
-    # empty data means the client is finished with us
-    while data:
-        if not do_something(connstream, data):
-            # we'll assume do_something returns False
-            # when we're finished with client
-            break
-        data = connstream.recv(1024)
-    # finished with client
-
-
 def startWebServer(webServer):
     try:
         webServer.serve_forever()
@@ -55,7 +43,8 @@ def StartHallucinate(args):
             valorant = True
     if (Utils.IsClientRunning() and not allow_multiple_clients):
         print("The Riot Client is currently running. In order to mask your online status, the Riot Client needs to be started by Hallucinate.")
-        res = input("Do you want Deceive to stop the Riot Client and games launched by it, so that it can restart with the proper configuration? [y/N]").lower()
+        res = input(
+            "Do you want Deceive to stop the Riot Client and games launched by it, so that it can restart with the proper configuration? [y/N]").lower()
         if res != "y" or res != "yes":
             return
         Utils.KillProcesses()
@@ -71,7 +60,8 @@ def StartHallucinate(args):
         ch = logging.StreamHandler()
         ch.setLevel(logging.ERROR)
         # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
         # add the handlers to the logger
@@ -88,9 +78,10 @@ def StartHallucinate(args):
         os.mkdir(Utils.DataDir)
 
     # Step 1: Open a port for our chat proxy, so we can patch chat port into clientconfig
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('', 0))
-    serverPort = sock.getsockname()[1]
+    incoming = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    incoming.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    incoming.bind((socket.gethostname(), 0))
+    serverPort = incoming.getsockname()[1]
 
     # Step 2: Find the Riot Client
     riotClientPath = Utils.GetRiotClientPath()
@@ -102,7 +93,8 @@ def StartHallucinate(args):
     # Step 3: Start proxy web server for clientconfig
     proxyServer = ConfigProxy.ConfigProxyFactory(serverPort)
     webServer = HTTPServer(("localhost", serverPort), proxyServer)
-    webServerThread = threading.Thread(target=startWebServer, args=(webServer,))
+    webServerThread = threading.Thread(
+        target=startWebServer, args=(webServer,))
     webServerThread.start()
 
     # Step 4: Start the Riot Client and wait for a connect
@@ -112,10 +104,13 @@ def StartHallucinate(args):
     if valorant:
         game = "valorant"
 
-    startArgs = "\"" + riotClientPath + "\"" + " --client-config-url=\"http://127.0.0.1:{}\" --launch-product={} --launch-patchline=live".format(serverPort, game)
+    startArgs = "\"" + riotClientPath + "\"" + \
+        " --client-config-url=\"http://127.0.0.1:{}\" --launch-product={} --launch-patchline=live".format(
+            serverPort, game)
     if allow_multiple_clients:
         startArgs += "--allow-multiple-clients"
-    riotClient = subprocess.Popen(startArgs, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+    riotClient = subprocess.Popen(
+        startArgs, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     if not riotClient:
         print("Exiting on Riot Client exit.")
         return
@@ -124,7 +119,8 @@ def StartHallucinate(args):
     chatHost = None
     chatPort = 0
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(certfile="Resources/cert.pem", keyfile="Resources/server.key")
+    context.load_cert_chain(certfile="Resources/cert.pem",
+                            keyfile="Resources/server.key")
 
     cht_file = ""
     for fn in os.listdir(Utils.DataDir):
@@ -152,22 +148,14 @@ def StartHallucinate(args):
             os.remove(os.path.join(Utils.DataDir, cht_file))
 
     # Step 6: Connect sockets.
-    print("IN STARTUPHANDLER:")
-    print(chatHost)
-    print(chatPort)
-    bindsocket = socket.socket()
-    bindsocket.bind((chatHost, chatPort))
-    bindsocket.listen(5)
+    # print(chatHost)
+    # print(chatPort)
+    outgoing = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    outgoing.bind((socket.gethostname(), chatPort))
 
     # Step 7: All sockets are now connected
-    while True:
-        newsocket, fromaddr = bindsocket.accept()
-        connstream = context.wrap_socket(newsocket, server_side=True)
-        try:
-            deal_with_client(connstream)
-        finally:
-            connstream.shutdown(socket.SHUT_RDWR)
-            connstream.close()
+    MainController.StartThreads(incoming, outgoing)
+
 
 if __name__ == "__main__":
     main()

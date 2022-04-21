@@ -5,7 +5,8 @@ import psutil
 import signal
 
 
-DataDir = os.path.join("/Users/{}/Library".format(getpass.getuser()), "Hallucinate")
+DataDir = os.path.join(
+    "/Users/{}/Library".format(getpass.getuser()), "Hallucinate")
 HallucinateVersion = "v1.1"
 
 
@@ -48,5 +49,6 @@ def GetRiotClientPath():
     except Exception as e:
         print(e)
         return None
+
 
 KillProcesses()
