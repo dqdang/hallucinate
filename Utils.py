@@ -48,3 +48,5 @@ def GetRiotClientPath():
     except Exception as e:
         print(e)
         return None
+
+KillProcesses()

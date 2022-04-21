@@ -6,6 +6,7 @@ import socket
 import ssl
 import subprocess
 import sys
+import threading
 import time
 import Utils
 
@@ -31,6 +32,14 @@ def deal_with_client(connstream):
             break
         data = connstream.recv(1024)
     # finished with client
+
+
+def startWebServer(webServer):
+    try:
+        webServer.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    webServer.server_close()
 
 
 def StartHallucinate(args):
@@ -92,6 +101,9 @@ def StartHallucinate(args):
 
     # Step 3: Start proxy web server for clientconfig
     proxyServer = ConfigProxy.ConfigProxyFactory(serverPort)
+    webServer = HTTPServer(("localhost", serverPort), proxyServer)
+    webServerThread = threading.Thread(target=startWebServer, args=(webServer,))
+    webServerThread.start()
 
     # Step 4: Start the Riot Client and wait for a connect
     game = "league_of_legends"
@@ -107,19 +119,42 @@ def StartHallucinate(args):
     if not riotClient:
         print("Exiting on Riot Client exit.")
         return
-    
-    # Step 5: Get chat server and port for this player by listening to even from ConfigProxy
+
+    # Step 5: Get chat server and port for this player by listening to event from ConfigProxy
     chatHost = None
     chatPort = 0
-    proxyServer.PatchedChatServer.on_change(proxyServer.ChatServerEventArgs(ChatHost=chatHost, ChatPort=chatPort))
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.load_cert_chain(certfile="Resources/cert.pem", keyfile="Resources/server.key")
 
-    if not chatHost:
-        print("Hallucinate was unable to find Riot's chat server, please try again later.")
-        return
+    cht_file = ""
+    for fn in os.listdir(Utils.DataDir):
+        if fn.endswith(".cht"):
+            cht_file = fn
+            break
+
+    while not chatHost:
+        if not cht_file:
+            for fn in os.listdir(Utils.DataDir):
+                if fn.endswith(".cht"):
+                    cht_file = fn
+                    break
+            continue
+        with open(os.path.join(Utils.DataDir, cht_file), "r") as f:
+            lines = f.readlines()
+            try:
+                chatHost = lines[0].strip()
+                chatPort = int(lines[1].strip())
+            except:
+                continue
+        if not chatHost:
+            time.sleep(5)
+        else:
+            os.remove(os.path.join(Utils.DataDir, cht_file))
 
     # Step 6: Connect sockets.
+    print("IN STARTUPHANDLER:")
+    print(chatHost)
+    print(chatPort)
     bindsocket = socket.socket()
     bindsocket.bind((chatHost, chatPort))
     bindsocket.listen(5)
