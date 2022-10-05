@@ -1,7 +1,9 @@
 import ConfigProxy
 from http.server import HTTPServer
 import logging
+import MainController
 import os
+import signal
 import socket
 import ssl
 import subprocess
@@ -26,7 +28,7 @@ def startWebServer(webServer):
     try:
         webServer.serve_forever()
     except KeyboardInterrupt:
-        pass
+        signal.signal(signal.SIGINT, Utils.sigint_handler)
     webServer.server_close()
 
 
@@ -44,7 +46,7 @@ def StartHallucinate(args):
     if (Utils.IsClientRunning() and not allow_multiple_clients):
         print("The Riot Client is currently running. In order to mask your online status, the Riot Client needs to be started by Hallucinate.")
         res = input(
-            "Do you want Deceive to stop the Riot Client and games launched by it, so that it can restart with the proper configuration? [y/N]").lower()
+            "Do you want Hallucinate to stop the Riot Client and games launched by it, so that it can restart with the proper configuration? [y/N]").lower()
         if res != "y" or res != "yes":
             return
         Utils.KillProcesses()
@@ -87,7 +89,7 @@ def StartHallucinate(args):
     riotClientPath = Utils.GetRiotClientPath()
     if not riotClientPath:
         print("Hallucinate was unable to find the path to the Riot Client. If you have the game and it is working properly, \
-            please file a bug report through GitHub (https://github.com/molenzwiebel/deceive) or Discord.")
+            please file a bug report through GitHub or Discord.")
         return
 
     # Step 3: Start proxy web server for clientconfig
@@ -154,7 +156,12 @@ def StartHallucinate(args):
     outgoing.bind((socket.gethostname(), chatPort))
 
     # Step 7: All sockets are now connected
-    MainController.StartThreads(incoming, outgoing)
+    try:
+        MainController.StartThreads(incoming, outgoing)
+    except KeyboardInterrupt:
+        signal.signal(signal.SIGINT, Utils.sigint_handler)
+        riotClient.terminate()
+        return
 
 
 if __name__ == "__main__":

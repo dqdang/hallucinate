@@ -46,6 +46,8 @@ def IncomingLoop():
                     _outgoing.send(data)
                     print("<!--RC TO SERVER-->\n" + content)
                 data = connstream.recv(1024)
+        except KeyboardInterrupt:
+            signal.signal(signal.SIGINT, Utils.sigint_handler)
         except Exception as e:
             print(e)
         finally:
@@ -63,6 +65,8 @@ def OutgoingLoop():
             while data and _connected:
                 content = str(data.decode("utf-8"))
                 _incoming.send(data)
+        except KeyboardInterrupt:
+            signal.signal(signal.SIGINT, Utils.sigint_handler)
         except Exception as e:
             print("Outgoing errored.")
             if _connected:
@@ -114,7 +118,7 @@ def PossiblyRewriteAndResendPresence(content, targetStatus):
         xmlstr = ElementTree.tostring(xml, encoding='utf8', method='xml')
         payload = xmlstr.encode("utf-8")
         _outgoing.send(payload)
-        print("<!--DECEIVE TO SERVER-->\n" + xmlstr)
+        print("<!--HALLUCINATE TO SERVER-->\n" + xmlstr)
 
     except Exception as e:
         print(e)

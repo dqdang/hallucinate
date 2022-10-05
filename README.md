@@ -1,2 +1,2 @@
 # hallucinate
-Appear offline for the MacOS League of Legends client
+Appear offline for the League of Legends client on both MacOS and Windows

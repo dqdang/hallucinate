@@ -1,13 +1,23 @@
 import getpass
 import json
 import os
+import platform
 import psutil
 import signal
+import sys
 
 
-DataDir = os.path.join(
-    "/Users/{}/Library".format(getpass.getuser()), "Hallucinate")
+if platform.system() == "Darwin":
+    DataDir = os.path.join(
+        "/Users/{}/Library".format(getpass.getuser()), "Hallucinate")
+else:
+    DataDir = os.path.join(
+        "C:/Users/{}/Downloads".format(getpass.getuser()), "Hallucinate")
 HallucinateVersion = "v1.1"
+
+
+def sigint_handler(signal, frame):
+    sys.exit(0)
 
 
 def GetProcesses():
@@ -35,7 +45,11 @@ def KillProcesses():
 def GetRiotClientPath():
     try:
         rc_paths = []
-        with open(os.path.join(r"/Users/Shared/Riot Games/", "RiotClientInstalls.json"), "r") as f:
+        if platform.system() == "Darwin":
+            abs_path = r"/Users/Shared/Riot Games/"
+        else:
+            abs_path = r"C:\\ProgramData\\Riot Games\\"
+        with open(os.path.join(abs_path, "RiotClientInstalls.json"), "r") as f:
             install_locations = json.load(f)
             if "rc_default" in install_locations:
                 rc_paths.append(install_locations["rc_default"])

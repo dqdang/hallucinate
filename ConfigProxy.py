@@ -82,7 +82,6 @@ def ConfigProxyFactory(serverPort):
                         h = -1 * h
                     with open(os.path.join(Utils.DataDir, str(h) + ".cht"), "w+") as f:
                         lines = f.readlines()
-                        print(len(lines))
                         if len(lines) == 0:
                             f.write(riotChatHost + "\n")
                             f.write(str(riotChatPort))
