@@ -112,7 +112,7 @@ def StartHallucinate(args):
     if allow_multiple_clients:
         startArgs += "--allow-multiple-clients"
     riotClient = subprocess.Popen(
-        startArgs, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+        startArgs, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     if not riotClient:
         print("Exiting on Riot Client exit.")
         return
